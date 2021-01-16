@@ -8,11 +8,21 @@
 
 # Usage
 
+For template code interleaved with normal code including top-level forms use:
+
 ```
 (named-readtables:in-readtable cl-fxml:syntax)
 ```
 
-_TODO_: Explain `cl-fxml:*new-line-after-opening*`.
+or wrap you normal code interleaving template code with `with-xml`:
+
+```
+(cl-fxml:with-xml
+  ((:p)
+    "Paragraph number one.))
+```
+
+The variable `cl-fxml:*new-line-after-opening*` controls whether to make a newline after `>` of the opening tags.
 
 # Examples
 
@@ -24,4 +34,25 @@ _TODO_: Explain `cl-fxml:*new-line-after-opening*`.
     ((:a :href "#") "Lorem ipsum dolor sit amet")))
 ```
 
-_TODO_: show *standard-output* capturing, Common Lisp interleaving template code.
+Output redirection to string:
+
+```
+(let ((str (make-array '(0) :element-type 'base-char :fill-pointer 0 :adjustable t)))
+  (with-output-to-string (*standard-output* str)
+    ((:html)
+      ((:head)
+        ((:title) "Html example"))
+      ((:body)
+        ((:a :href "#") "Lorem ipsum dolor sit amet"))))
+  str)
+```
+
+Interleaving code:
+
+```
+(let ((x 25))
+  ((:root :x x 'attribute-without-value)
+    (loop for i below 10
+          do ((:element :index i)
+               (format t "~:r" i)))))
+```

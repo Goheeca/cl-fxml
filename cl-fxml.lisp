@@ -1,13 +1,13 @@
 
 (defpackage :cl-fxml
   (:use :common-lisp :agnostic-lizard :named-readtables)
-  (:export :*new-line-after-opening* :syntax))
+  (:export :*new-line-after-opening* :syntax :with-xml))
 
 (in-package :cl-fxml)
 
 ;;; Distinguisher
 
-(defun my-xml-p (form)
+(defun xml-p (form)
   (and (consp form) (consp (car form)) (keywordp (caar form))))
 
 ;;; Settings
@@ -20,19 +20,19 @@
 (defvar *indentation* 0)
 
 (defun process-my-xml (form walker)
-  (if (my-xml-p form)
+  (if (xml-p form)
     (destructuring-bind ((tag &rest atts) &body tagbody) form
       `(progn
-         (format t (if *new-line-after-opening* "~&~v,v@T<~a" "~2*<~a") *indentation* *indentation* ,tag)
+         (format t "~&~v,v@T<~a" *indentation* *indentation* ,tag)
          (incf *indentation* +indent-size+)
          ,@(loop for prev-att = nil then att
-                 for att in atts
+                 and att in atts
                  collect `(format t ,(cond ((keywordp att) " ~a=")
-                                           ((and (symbolp att) (not (keywordp prev-att))) " ~a")
-                                           (t "\"~a\"")) ,att))
+                                           ((keywordp prev-att) "\"~a\"")
+                                           (t " ~a")) ,att))
          (if *new-line-after-opening*
            (format t ,(if tagbody ">~%" "/>~%"))
-           (format t ,(if tagbody "~&~v,v@T>" "/>~%") *indentation* *indentation* ))
+           (format t ,(if tagbody "~&~v,v@T>" "~2*/>~%") *indentation* *indentation* ))
          ,(let ((result (gensym)))
             `(let ((,result ,(funcall walker tagbody)))
                 (when (stringp ,result) (format t (if *new-line-after-opening* "~&~v,v@T~a~%" "~2*~a~%") *indentation* *indentation* ,result))))
@@ -52,7 +52,7 @@
 
 ;;; Macro
 
-(defmacro xml (&body body &environment env)
+(defmacro with-xml (&body body &environment env)
   (walk-my-xml body env))
 
 ;;; Read macro
@@ -61,7 +61,7 @@
   (let* ((normal-rt *readtable*)
          (*readtable* rt))
     (agnostic-lizard:install-wrap-every-form-reader
-      #'(lambda (form) (cons 'xml (list form))))
+      #'(lambda (form) (cons 'with-xml (list form))))
     (let* ((rt *readtable*)
            (*readtable* normal-rt))
       rt)))

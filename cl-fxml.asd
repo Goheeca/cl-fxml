@@ -2,7 +2,7 @@
      
 (defsystem "cl-fxml"
   :description "cl-fxml: Common Lisp - Finally eXtended Markup Language."
-  :version "1.1.0"
+  :version "1.1.1"
   :author "Goheeca <goheeca@gmail.com>"
   :licence "Public Domain"
   :components ((:file "cl-fxml"))
