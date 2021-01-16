@@ -1,11 +1,9 @@
 
 (defpackage :cl-fxml
   (:use :common-lisp :agnostic-lizard :named-readtables)
-  (:export :enable-syntax :*new-line-after-opening*))
+  (:export :*new-line-after-opening* :syntax))
 
 (in-package :cl-fxml)
-
-;(ql:quickload "agnostic-lizard")
 
 ;;; Distinguisher
 
@@ -63,15 +61,14 @@
   (let* ((normal-rt *readtable*)
          (*readtable* rt))
     (agnostic-lizard:install-wrap-every-form-reader
-      #'(lambda (form) #|(format t "~s" (cons 'xml (list form)))|# (cons 'xml (list form))))
+      #'(lambda (form) (cons 'xml (list form))))
     (let* ((rt *readtable*)
            (*readtable* normal-rt))
       rt)))
 
-(defvar *my-readtable* (setup (copy-readtable nil)))
+(defvar *extended-readtable* (setup (copy-readtable nil)))
 
-(defmacro in-syntax (rt-expr)
-  `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (setq *readtable* ,rt-expr)))
-
-(defmacro enable-syntax () (in-syntax *my-readtable*))
+(defreadtable syntax
+   (:merge :standard)
+   (:syntax-from *extended-readtable* #\( #\()
+   (:case :preserve))
