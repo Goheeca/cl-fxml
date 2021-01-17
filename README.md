@@ -59,7 +59,7 @@ Interleaving code:
 
 # TODO
 
-- [ ] comments <!-- ... -->
-- [ ] escaping <![CDATA[ ... ]]>, ampersand escape sequences
+- [ ] comments `<!-- ... -->`
+- [ ] escaping `<![CDATA[ ... ]]>`, ampersand escape sequences
 - [ ] in-place computation of tags and attributes, seems hard to do
 - [ ] hook for transforming values which aren't tags, we're now accepting strings (perhaps using multiple values for distinguishing nil caused by tags from other values)
