@@ -19,7 +19,7 @@
 
 (defvar *indentation* 0)
 
-(defun process-my-xml (form walker)
+(defun process-xml (form walker)
   (if (xml-p form)
     (destructuring-bind ((tag &rest atts) &body tagbody) form
       `(progn
@@ -42,18 +42,18 @@
 
 ;;; Walking
 
-(defun walk-my-xml (forms env)
+(defun walk-xml (forms env)
   `(progn
      ,@(loop for form in forms
              collect (agnostic-lizard:walk-form form env 
                        :on-every-form-pre #'(lambda (f e)
-                                              (process-my-xml f #'(lambda (body)
-                                                                    (walk-my-xml body e))))))))
+                                              (process-xml f #'(lambda (body)
+                                                                    (walk-xml body e))))))))
 
 ;;; Macro
 
 (defmacro with-xml (&body body &environment env)
-  (walk-my-xml body env))
+  (walk-xml body env))
 
 ;;; Read macro
 
