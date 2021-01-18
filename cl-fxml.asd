@@ -4,6 +4,6 @@
   :description "cl-fxml: Common Lisp - Finally eXtended Markup Language."
   :version "1.1.1"
   :author "Goheeca <goheeca@gmail.com>"
-  :licence "Public Domain"
+  :licence "MIT"
   :components ((:file "cl-fxml"))
   :depends-on ("agnostic-lizard" "named-readtables"))
