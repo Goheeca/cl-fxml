@@ -2,7 +2,7 @@
 (defpackage :cl-fxml
   (:use :common-lisp :agnostic-lizard :named-readtables)
   (:export :*new-line-after-opening* :*indent-size*
-	   :syntax :with-xml))
+           :syntax :with-xml))
 
 (in-package :cl-fxml)
 
