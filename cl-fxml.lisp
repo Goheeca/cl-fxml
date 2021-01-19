@@ -31,7 +31,7 @@
                  collect `(format t ,(cond ((keywordp att) " ~a=")
                                            ((keywordp prev-att) "\"~a\"")
                                            (t " ~a"))
-				  ,att))
+                                  ,att))
          (if *new-line-after-opening*
            (format t ,(if tagbody ">~%" "/>~%"))
            (format t ,(if tagbody "~&~v,v@T>" "~2*/>~%") *indentation* *indentation*))
