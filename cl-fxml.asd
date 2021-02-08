@@ -1,8 +1,8 @@
 (in-package :asdf)
-     
+
 (defsystem "cl-fxml"
   :description "cl-fxml: Common Lisp - Finally eXtended Markup Language."
-  :version "1.1.1"
+  :version "1.1.2"
   :author "Goheeca <goheeca@gmail.com>"
   :licence "MIT"
   :components ((:file "cl-fxml"))

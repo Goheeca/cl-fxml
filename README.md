@@ -57,9 +57,29 @@ Interleaving code:
                (format t "~:r" i)))))
 ```
 
+A template in a variable (_defvar_ has to be top-level, that's why we switch syntax after top-level forms):
+
+```
+(defvar *x* '((:element :x x) "Test"))
+
+(named-readtables:in-readtable cl-fxml:syntax)
+
+((:root 'blah)
+  (eval `(cl-fxml:with-xml
+           (let ((x 123))
+             ,*X*))))
+```
+Note that `*X*` is in upper-case, because the merged readtable defined for `named-reatables` uses case preserve (might look into that again).
+
+Comment:
+
+```
+((:!-- "This is a comment."))
+```
+
 # TODO
 
-- [ ] comments `<!-- ... -->`
+- [x] comments `<!-- ... -->`
 - [ ] escaping `<![CDATA[ ... ]]>`, ampersand escape sequences
 - [ ] in-place computation of tags and attributes, seems hard to do
 - [ ] hook for transforming values which aren't tags, we're now accepting strings (perhaps using multiple values for distinguishing nil caused by tags from other values)
