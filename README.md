@@ -54,12 +54,10 @@ Interleaving code:
                (format t "~:r" i)))))
 ```
 
-A template in a variable (_defvar_ has to be top-level, that's why we switch syntax after top-level forms):
+A template in a variable:
 
 ```
 (defvar *x* '((:element :x x) "Test"))
-
-(named-readtables:in-readtable cl-fxml:syntax)
 
 ((:root 'blah)
   (eval `(cl-fxml:with-xml
