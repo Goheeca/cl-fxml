@@ -25,28 +25,35 @@
       (destructuring-bind ((tag &rest atts) &body tagbody) form
         `(unwind-protect
               (progn
-                (format t "~&~v,v@T<~a" *indentation* *indentation* ,tag)
+                (format t "~&~v,0@T<~a"
+                        *indentation*
+                        ,tag)
                 (incf *indentation* *indent-size*)
                 ,@(loop for prev-att = nil then att
                      and att in atts
-                     collect `(format t
-                                      ,(cond ((keywordp att) " ~a=")
-                                             ((keywordp prev-att) "\"~a\"")
-                                             (t " ~a"))
+                     collect `(format t "~[ ~a=~;\"~a\"~:; ~a~]"
+                                      ,(cond ((keywordp att) 0)
+                                             ((keywordp prev-att) 1)
+                                             (t 2))
                                       ,att))
-                (if *new-line-after-opening*
-                    (format t ,(cond ((eq tag :!--) " -->~%")
-                                     (tagbody ">~%")
-                                     (t "/>~%")))
-                    (format t ,(cond ((eq tag :!--) "~2* -->~%")
-                                     (tagbody "~&~v,v@T>")
-                                     (t "~2*/>~%"))
-                            *indentation* *indentation*))
+                (format t "~[~2* -->~%~;~:[~&~v,0@T>~;~*>~%~]~:;~2*/>~%~]"
+                        ,(cond ((eq tag :!--) 0)
+                               (tagbody 1)
+                               (t 2))
+                        *new-line-after-opening*
+                        *indentation*)
                 ,(let ((result (gensym)))
                    `(let ((,result ,(funcall walker tagbody)))
-                      (when (stringp ,result) (format t (if *new-line-after-opening* "~&~v,v@T~a~%" "~2*~a~%") *indentation* *indentation* ,result)))))
+                      (when (stringp ,result)
+                        (format t "~:[~*~;~&~v,0@T~]~a~%"
+                                *new-line-after-opening*
+                                *indentation*
+                                ,result)))))
            (decf *indentation* *indent-size*)
-           ,(when tagbody `(format t "~&~v,v@T</~a>~%" *indentation* *indentation* ,tag))))
+           ,(when tagbody
+              `(format t "~&~v,0@T</~a>~%"
+                       *indentation*
+                       ,tag))))
       form))
 
 ;;; Walking
@@ -80,4 +87,4 @@
 (defreadtable syntax
     (:merge :standard)
   (:syntax-from *extended-readtable* #\( #\()
-  (:case :preserve))
+  (:case :upcase))

@@ -1,7 +1,5 @@
 # Installation
 
-
-
 ```
 (ql:quickload "cl-fxml")
 ```
@@ -13,7 +11,6 @@ For template code interleaved with normal code including top-level forms use:
 ```
 (named-readtables:in-readtable cl-fxml:syntax)
 ```
-
 or wrap you normal code interleaving template code with `with-xml`:
 
 ```
@@ -67,14 +64,21 @@ A template in a variable (_defvar_ has to be top-level, that's why we switch syn
 ((:root 'blah)
   (eval `(cl-fxml:with-xml
            (let ((x 123))
-             ,*X*))))
+             ,*x*))))
 ```
-Note that `*X*` is in upper-case, because the merged readtable defined for `named-reatables` uses case preserve (might look into that again).
 
 Comment:
 
 ```
 ((:!-- "This is a comment."))
+```
+
+For lower case use the standard symbol character escaping (e.g. `:|RootElement|`):
+
+```
+((:|RootElement| '|Blah|)
+  ((:|Test|)
+    "Content"))
 ```
 
 # TODO
