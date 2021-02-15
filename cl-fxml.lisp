@@ -31,17 +31,23 @@
                 (incf *indentation* *indent-size*)
                 ,@(loop for prev-att = nil then att
                      and att in atts
-                     collect `(format t "~[ ~a=~;\"~a\"~:; ~a~]"
+                     collect `(format t "~[~* ~a=~;~*\"~a\"~:;~:[ ~;~]~a~]"
                                       ,(cond ((keywordp att) 0)
                                              ((keywordp prev-att) 1)
                                              (t 2))
+                                      ,(eq 0 (position #\[ (subseq (symbol-name tag) (1- (length (symbol-name tag))))))
                                       ,att))
-                (format t "~[~2* -->~%~;~:[~&~v,0@T>~;~*>~%~]~:;~2*/>~%~]"
-                        ,(cond ((eq tag :!--) 0)
-                               (tagbody 1)
-                               (t 2))
+                (format t "~[?>~%~; -->~%~;~2*~a>~%~;~:[~&~v,0@T>~;>~%~]~:;/>~%~]"
+                        ,(cond ((eq 0 (position #\? (symbol-name tag))) 0)
+                               ((eq tag :!--) 1)
+                               ((eq 0 (position #\! (symbol-name tag))) 2)
+                               (tagbody 3)
+                               (t 4))
                         *new-line-after-opening*
-                        *indentation*)
+                        *indentation*
+                        ,(apply #'concatenate 'string
+                                (loop repeat (count #\[ (symbol-name tag))
+                                   collect "]")))
                 ,(let ((result (gensym)))
                    `(let ((,result ,(funcall walker tagbody)))
                       (when (stringp ,result)

