@@ -31,7 +31,7 @@
                 (incf *indentation* *indent-size*)
                 ,@(loop for prev-att = nil then att
                      and att in atts
-                     collect `(format t "~[~* ~a=~;~*\"~a\"~:;~:[ ~;~]~a~]"
+                     collect `(format t "~[~* ~a=~;~*\"~a\"~:;~*~:[~;~2:*~:[ ~;~]~a~]~]"
                                       ,(cond ((keywordp att) 0)
                                              ((keywordp prev-att) 1)
                                              (t 2))

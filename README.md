@@ -90,16 +90,14 @@ CDATA:
 ```
 ((:?xml :version "1.0"))
 ((:!doctype 'lolz "["
-  (progn
-    ((:!entity "lol0" (format nil "~s" "lol")))
-    ((:!element 'lolz "(#PCDATA)"))
-    (loop for i from 1 below 10
-      do ((:!entity (format nil "lol~a" i)
-                    (format nil "~s"
-                            (apply #'concatenate 'string
-                                   (loop repeat 10
-                                         collect (format nil "&lol~a;" (1- i))))))))
-    "")
+  ((:!entity "lol0" (format nil "~s" "lol")))
+  ((:!element 'lolz "(#PCDATA)"))
+  (loop for i from 1 below 10
+    do ((:!entity (format nil "lol~a" i)
+                  (format nil "~s"
+                          (apply #'concatenate 'string
+                                 (loop repeat 10
+                                   collect (format nil "&lol~a;" (1- i))))))))
   "]"))
 ((:lolz)
   "&lol9;")
