@@ -106,6 +106,7 @@ CDATA:
 # TODO
 
 - [x] comments `<!-- ... -->`
-- [x] escaping `<![CDATA[ ... ]]>`, ampersand escape sequences
-- [ ] in-place computation of tags and attributes, seems hard to do
+- [x] escaping `<![CDATA[ ... ]]>`
+- [ ] ampersand escape sequences
+- [x] in-place computation of tags and attributes
 - [ ] hook for transforming values which aren't tags, we're now accepting strings (perhaps using multiple values for distinguishing nil caused by tags from other values)

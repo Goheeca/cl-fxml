@@ -25,6 +25,10 @@
        (consp (cdr form))
        (keywordp (car form))))
 
+(defun attribute-name-p (form)
+  (or (keywordp form)
+      (composed-element-p form)))
+
 (defun xml-template-p (form)
   (and (consp form)
        (consp (car form))
@@ -41,16 +45,25 @@
 (defvar *indentation* 0)
 
 (defun namespace-element (first-part &optional second-part)
-  (if second-part
-      (intern (concatenate 'string
-			   (format nil "~a" first-part) '(#\:) (format nil "~a" second-part))
-	      (find-package "KEYWORD"))
-      first-part))
+  (intern 
+   (if second-part
+       (concatenate 'string
+		    (format nil "~a" first-part) '(#\:) (format nil "~a" second-part))
+       (format nil "~a" first-part))
+   (find-package "KEYWORD")))
 
 (defun process-element (&rest parts)
   (cond ((computed-element-p parts) (apply #'namespace-element (cdr parts)))
 	((composed-element-p parts) (apply #'namespace-element parts))
 	(t (car parts))))
+
+(defun attribute-printer (att prev-att-p tag)
+  `(format t "~[~* ~a=~;~*\"~a\"~:;~*~:[~;~2:*~:[ ~;~]~a~]~]"
+	   (cond ((attribute-name-p ,att) 0)
+		 (,prev-att-p 1)
+		 (t 2))
+	   (eq 0 (position #\[ (subseq (symbol-name ,tag) (1- (length (symbol-name ,tag))))))
+	   ,att))
 
 (defun process-xml (form walker)
   (cond ((composed-element-p form) `(process-element ,@form))
@@ -66,16 +79,18 @@
 			    *indentation*
 			    ,tag)
 		    (incf *indentation* *indent-size*)
-		    ,@(loop for prev-att = nil then att
-			 and att in atts
-			 collect `(format t "~[~* ~a=~;~*\"~a\"~:;~*~:[~;~2:*~:[ ~;~]~a~]~]"
-					  ,(cond ((or (keywordp att)
-						      (composed-element-p att)) 0)
-						 ((or (keywordp prev-att)
-						      (composed-element-p prev-att)) 1)
-						 (t 2))
-					  (eq 0 (position #\[ (subseq (symbol-name ,tag) (1- (length (symbol-name ,tag))))))
-					  ,att))
+		    ,(when atts
+		       `(let (prev-att)
+			  ,@(loop for att in atts
+			       collect (alexandria:once-only
+					(att)
+					`(prog1 
+					     (if (consp ,att)
+						 (loop for inner-prev-att = nil then inner-att
+						    and inner-att in ,att
+						    do ,(attribute-printer 'inner-att '(keywordp inner-prev-att) tag))
+						 ,(attribute-printer att '(keywordp prev-att) tag))
+					   (setf prev-att ,att))))))
 		    (format t "~[?>~%~; -->~%~;~2*~a>~%~;~:[~&~v,0@T>~;>~%~]~:;/>~%~]"
 			    (cond ((eq 0 (position #\? (symbol-name ,tag))) 0)
 				  ((eq ,tag :!--) 1)
