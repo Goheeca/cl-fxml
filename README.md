@@ -16,7 +16,7 @@ or wrap you normal code interleaving template code with `with-xml`:
 ```
 (cl-fxml:with-xml
   ((:p)
-    "Paragraph number one.))
+    "Paragraph number one."))
 ```
 
 The variable `cl-fxml:*new-line-after-opening*` controls whether to make a newline after `>` of the opening tags.
