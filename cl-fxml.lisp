@@ -133,11 +133,27 @@
 
 ;;; Read macro
 
+
+(defun wrap-every-form-reader (callback)
+  (lambda (stream char)
+    (unread-char char stream)
+    (let ((eof-marker (gensym)))
+      (multiple-value-bind (original-reader originally-non-terminating-p)
+          (get-macro-character #\()
+        (set-syntax-from-char #\( #\( *readtable* (copy-readtable nil))
+        (unwind-protect
+            (let ((form (read stream nil eof-marker)))
+              (cond
+                ((equal form eof-marker) nil)
+                (t (funcall callback form))))
+          (set-macro-character #\( original-reader originally-non-terminating-p))))))
+
+
 (defun setup (&optional (rt *readtable*))
   (let* ((normal-rt *readtable*)
          (*readtable* rt))
-    (agnostic-lizard:install-wrap-every-form-reader #'(lambda (form)
-                                                        (cons 'with-xml (list form))))
+    (set-macro-character #\( (wrap-every-form-reader #'(lambda (form)
+                                                         (cons 'with-xml (list form)))))
     (let* ((rt *readtable*)
            (*readtable* normal-rt))
       rt)))
