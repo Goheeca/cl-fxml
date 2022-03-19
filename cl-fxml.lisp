@@ -2,119 +2,119 @@
 (defpackage :cl-fxml
   (:use :common-lisp)
   (:import-from :agnostic-lizard
-		:walk-form
-		:install-wrap-every-form-reader)
+                :walk-form
+                :install-wrap-every-form-reader)
   (:import-from :named-readtables
-		:defreadtable)
+                :defreadtable)
   (:import-from :alexandria
-		:once-only)
+                :once-only)
   (:export :*new-line-after-opening* :*indent-size*
            :syntax :with-xml))
 
 (in-package :cl-fxml)
-
-;;; Distinguishers
-
-(defun computed-element-p (form)
-  (and (consp form)
-       (consp (cdr form))
-       (eq :|| (car form))))
-
-(defun composed-element-p (form)
-  (and (consp form)
-       (consp (cdr form))
-       (keywordp (car form))))
-
-(defun attribute-name-p (form)
-  (or (keywordp form)
-      (composed-element-p form)))
-
-(defun xml-template-p (form)
-  (and (consp form)
-       (consp (car form))
-       (or (keywordp (caar form))
-	   (composed-element-p (caar form)))))
 
 ;;; Settings
 
 (defvar *indent-size* 4)
 (defvar *new-line-after-opening* nil)
 
+;;; Distinguishers
+
+(defun computed-name-p (form)
+  (and (consp form)
+       (consp (cdr form))
+       (eq :|| (car form))))
+
+(defun composed-name-p (form)
+  (and (consp form)
+       (consp (cdr form))
+       (keywordp (car form))))
+
+(defun name-p (form)
+  (or (keywordp form)
+      (composed-name-p form)))
+
+(defun xml-template-p (form)
+  (and (consp form)
+       (consp (car form))
+       (or (keywordp (caar form))
+           (composed-name-p (caar form)))))
+
 ;;; Transformation
 
 (defvar *indentation* 0)
 
-(defun namespace-element (first-part &optional second-part)
+(defun qualify-name (first-part &optional second-part)
   (intern 
    (if second-part
        (concatenate 'string
-		    (format nil "~a" first-part) '(#\:) (format nil "~a" second-part))
+                    (format nil "~a" first-part) '(#\:) (format nil "~a" second-part))
        (format nil "~a" first-part))
    (find-package "KEYWORD")))
 
-(defun process-element (&rest parts)
-  (cond ((computed-element-p parts) (apply #'namespace-element (cdr parts)))
-	((composed-element-p parts) (apply #'namespace-element parts))
-	(t (car parts))))
+(defun process-composed-name (&rest parts)
+  (cond ((computed-name-p parts) (apply #'qualify-name (cdr parts)))
+        ((composed-name-p parts) (apply #'qualify-name parts))
+        (t (car parts))))
 
-(defun attribute-printer (att prev-att-p tag)
+(defun attribute-parts-printer (attribute previous-attribute-p element-name)
   `(format t "~[~* ~a=~;~*\"~a\"~:;~*~:[~;~2:*~:[ ~;~]~a~]~]"
-	   (cond ((attribute-name-p ,att) 0)
-		 (,prev-att-p 1)
-		 (t 2))
-	   (eq 0 (position #\[ (subseq (symbol-name ,tag) (1- (length (symbol-name ,tag))))))
-	   ,att))
+           (cond ((name-p ,attribute) 0)
+                 (,previous-attribute-p 1)
+                 (t 2))
+           (eq 0 (position #\[ (subseq (symbol-name ,element-name) (1- (length (symbol-name ,element-name))))))
+           ,attribute))
 
 (defun process-xml (form walker)
-  (cond ((composed-element-p form) `(process-element ,@form))
-	((xml-template-p form)
-	 (destructuring-bind ((tag &rest atts) &body tagbody) form
-	   (alexandria:once-only
-	    ((tag (if (composed-element-p tag)
-		      `(process-element ,@tag)
-		      tag)))
-	    `(unwind-protect
-		  (progn
-		    (format t "~&~v,0@T<~a"
-			    *indentation*
-			    ,tag)
-		    (incf *indentation* *indent-size*)
-		    ,(when atts
-		       `(let (prev-att)
-			  ,@(loop for att in atts
-			       collect (alexandria:once-only
-					(att)
-					`(prog1 
-					     (if (consp ,att)
-						 (loop for inner-prev-att = nil then inner-att
-						    and inner-att in ,att
-						    do ,(attribute-printer 'inner-att '(keywordp inner-prev-att) tag))
-						 ,(attribute-printer att '(keywordp prev-att) tag))
-					   (setf prev-att ,att))))))
-		    (format t "~[?>~%~; -->~%~;~2*~a>~%~;~:[~&~v,0@T>~;>~%~]~:;/>~%~]"
-			    (cond ((eq 0 (position #\? (symbol-name ,tag))) 0)
-				  ((eq ,tag :!--) 1)
-				  ((eq 0 (position #\! (symbol-name ,tag))) 2)
-				  (,(not (null tagbody)) 3)
-				  (t 4))
-			    *new-line-after-opening*
-			    *indentation*
-			    (apply #'concatenate 'string
-				   (loop repeat (count #\[ (symbol-name ,tag))
-				      collect "]")))
-		    ,(alexandria:once-only
-		      ((result (funcall walker tagbody)))
-		      `(when (stringp ,result)
-			 (format t "~:[~*~;~&~v,0@T~]~a~%"
-				 *new-line-after-opening*
-				 *indentation*
-				 ,result))))
-	       (decf *indentation* *indent-size*)
-	       ,(when tagbody
-		  `(format t "~&~v,0@T</~a>~%"
-			   *indentation*
-			   ,tag))))))
-	(t form)))
+  (cond ((composed-name-p form) `(process-composed-name ,@form))
+        ((xml-template-p form)
+         (destructuring-bind ((element-name &rest attributes) &body element-body) form
+           (alexandria:once-only
+            ((element-name (if (composed-name-p element-name)
+                               `(process-composed-name ,@element-name)
+                               element-name)))
+            `(unwind-protect
+                 (progn
+                   (format t "~&~v,0@T<~a"
+                           *indentation*
+                           ,element-name)
+                   (incf *indentation* *indent-size*)
+                   ,(when attributes
+                      `(let (previous-attribute)
+                         ,@(loop for attribute in attributes
+                              collect (alexandria:once-only
+                                      (attribute)
+                                      `(prog1
+                                           (if (consp ,attribute)
+                                               (loop for inner-previous-attribute = nil then inner-attribute
+                                                  and inner-attribute in ,attribute
+                                                  do ,(attribute-parts-printer 'inner-attribute '(keywordp inner-previous-attribute) element-name))
+                                               ,(attribute-parts-printer attribute '(keywordp previous-attribute) element-name))
+                                         (setf previous-attribute ,attribute))))))
+                   (format t "~[?>~%~; -->~%~;~2*~a>~%~;~:[~&~v,0@T>~;>~%~]~:;/>~%~]"
+                           (cond ((eq 0 (position #\? (symbol-name ,element-name))) 0)
+                                 ((eq ,element-name :!--) 1)
+                                 ((eq 0 (position #\! (symbol-name ,element-name))) 2)
+                                 (,(not (null element-body)) 3)
+                                 (t 4))
+                           *new-line-after-opening*
+                           *indentation*
+                           (apply #'concatenate 'string
+                                  (loop repeat (count #\[ (symbol-name ,element-name))
+                                     collect "]")))
+                   ,(alexandria:once-only
+                     ((result (funcall walker element-body)))
+                     `(when (stringp ,result)
+                        (format t "~:[~*~;~&~v,0@T~]~a~%"
+                                *new-line-after-opening*
+                                *indentation*
+                                ,result))))
+               (decf *indentation* *indent-size*)
+               ,(when element-body
+                  `(format t "~&~v,0@T</~a>~%"
+                           *indentation*
+                           ,element-name))))))
+        (t form)))
 
 ;;; Walking
 

@@ -11,7 +11,8 @@ For template code interleaved with normal code including top-level forms use:
 ```
 (named-readtables:in-readtable cl-fxml:syntax)
 ```
-or wrap you normal code interleaving template code with `with-xml`:
+
+or wrap your template code with `with-xml`:
 
 ```
 (cl-fxml:with-xml
@@ -108,5 +109,6 @@ CDATA:
 - [x] comments `<!-- ... -->`
 - [x] escaping `<![CDATA[ ... ]]>`
 - [ ] ampersand escape sequences
-- [x] in-place computation of tags and attributes
-- [ ] hook for transforming values which aren't tags, we're now accepting strings (perhaps using multiple values for distinguishing nil caused by tags from other values)
+- [x] namespaced names
+- [x] in-place computation of element and attribute names
+- [ ] hook for transforming body values which aren't elements, we're now accepting only strings (perhaps using multiple values for distinguishing nil caused by elements from other values)
