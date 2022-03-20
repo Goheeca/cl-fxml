@@ -133,7 +133,6 @@
 
 ;;; Read macro
 
-
 (defun wrap-every-form-reader (callback)
   (lambda (stream char)
     (unread-char char stream)
@@ -147,7 +146,6 @@
                 ((equal form eof-marker) nil)
                 (t (funcall callback form))))
           (set-macro-character #\( original-reader originally-non-terminating-p))))))
-
 
 (defun setup (&optional (rt *readtable*))
   (let* ((normal-rt *readtable*)
