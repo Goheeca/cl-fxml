@@ -163,7 +163,10 @@ You can use it recursively:
 You can compute the sequence of attributes:
 
 ```
-((:element :pre "pre" (loop for i below 3 append `(,(:ns (format nil "param-~a" i)) ,i)) :post "post")
+((:element :pre "pre"
+           (loop for i below 3
+              append `(,(:ns (format nil "param-~a" i)) ,i))
+           :post "post")
   "body")
 ```
 
